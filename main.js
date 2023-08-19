@@ -7,7 +7,8 @@ const menuOverlay = document.querySelector(".menu-overlay")
 const menuModal = document.querySelector(".menu-modal")
 const links = document.querySelectorAll(".menu-links h2:not(.active)")
 const linkButton = document.querySelector(".link-button")
-const images = [...document.querySelectorAll(".link-image")]
+const images = new Array(5).fill(null).map((_, i) => `url('/images/${i + 1}.jpg')`)
+const menuLinks = document.querySelector(".menu-links")
 
 let lastRandom
 let image
@@ -16,6 +17,7 @@ splitDomText(linkButton)
 const linkButtonChars = linkButton.querySelectorAll("span")
 
 let toggled = false
+let lastTl
 button.addEventListener("click", () => {
     toggled = !toggled
     button.classList.toggle("toggled")
@@ -24,7 +26,10 @@ button.addEventListener("click", () => {
 
     if (toggled) spawn()
 
+    if (lastTl) lastTl.kill()
+
     const tl = gsap.timeline({ defaults: { ease: "power2.out" } })
+    lastTl = tl
 
     tl.fromTo(".menu-links h2", { x: 100 }, { x: 0, stagger: 0.05, duration: 1.2 })
     tl.fromTo(".link-button", { alpha: 0 }, { alpha: 1 }, "-=0.9")
@@ -40,8 +45,8 @@ links.forEach((link) => {
     const line = link.querySelector(".line")
     let animation
     link.addEventListener("mouseenter", () => {
-        image = getRandomImage()
         gsap.fromTo(line, { x: "-100%" }, { x: "0%", ease: "power2.out", duration: 0.4 })
+        image = createImage()
         animation = showRandomImage()
     })
     link.addEventListener("mouseleave", () => {
@@ -87,11 +92,12 @@ function hideImage() {
         alpha: 0,
         ease: "power4.out",
     })
+    const imageToRemove = image
     gsap.to(image, {
         backgroundSize: "125%",
         ease: "power4.out",
         onComplete: () => {
-            image.style.backgroundSize = "100%"
+            imageToRemove.remove()
         },
     })
 }
@@ -101,4 +107,13 @@ function getRandomImage() {
     if (lastRandom === newRandom) lastRandom = Math.floor(Math.random() * images.length)
     else lastRandom = newRandom
     return images[lastRandom]
+}
+
+function createImage() {
+    const imageUrl = getRandomImage()
+    const element = document.createElement("div")
+    element.classList.add("link-image")
+    element.style.backgroundImage = imageUrl
+    menuLinks.prepend(element)
+    return element
 }
